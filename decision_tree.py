@@ -138,10 +138,8 @@ class DecisionTree:
                 the class label.
         
         Returns: a DecisionNode or LeafNode representing the tree
-        """
-        #
-        # fill in the function body here!
-        #
+        """ 
+        # call recursively by simply passing the two partitions into learn_tree as examples
         return None  # fix this line!
     
     def classify(self, example):
