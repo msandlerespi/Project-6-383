@@ -147,11 +147,29 @@ class DecisionTree:
             example.pop('2020_label')
         all_splits = self.get_splits(examples_copy, examples_copy[0].keys(), 0, {})
         max_split = (0, None, None)
-        for splits in all_splits:
+        splits = all_splits[0]
+        for split in all_splits:
             best_split = self.calculate_best_key(examples_copy, splits)
             if best_split[0] > max_split[0]:
                 max_split = best_split
-        new_node = DecisionNode(max_split[0], splits[max_split[0]], self.learn_tree(max_split[2]), self.learn_tree(max_split[1]), self.learn_tree(max_split[3]))
+                splits = split
+        if(len(max_split[1]) > self.min_leaf_count and len(max_split[2]) > self.min_leaf_count and len(max_split[3]) > self.min_leaf_count):
+            new_node = DecisionNode(max_split[0], splits[max_split[0]], self.learn_tree_helper(max_split[2], splits), self.learn_tree_helper(max_split[1], splits), self.learn_tree_helper(max_split[3], splits))
+            return new_node
+        else:
+            pred_class = (0, 0)
+            for key in examples_copy.keys():
+                count = 0
+                for example in examples_copy:
+                    if example[key] >= splits[key]:
+                        count += 1
+                if count > pred_class[0]:
+                    pred_class = (count, key)
+            return LeafNode(pred_class[1], pred_class[0], len(examples_copy))
+
+    def learn_tree_helper(self, examples, splits):
+        max_split = self.calculate_best_key(examples, splits)
+        new_node = DecisionNode(max_split[0], splits[max_split[0]], self.learn_tree_helper(max_split[2], splits), self.learn_tree_helper(max_split[1], splits), self.learn_tree_helper(max_split[3], splits))
         return new_node
 
     def get_splits(self, examples, keys, index, current):
