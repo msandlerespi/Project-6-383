@@ -1,6 +1,6 @@
 import csv
 import random
-
+import math
 
 def read_data(csv_path):
     """Read in the training data from a csv file.
@@ -140,8 +140,66 @@ class DecisionTree:
         Returns: a DecisionNode or LeafNode representing the tree
         """ 
         # call recursively by simply passing the two partitions into learn_tree as examples
-        return None  # fix this line!
-    
+        # splits are based on >=
+        all_splits = self.get_splits(examples, examples[0].keys(), 0, {})
+        max_split = (0, None, None)
+        for splits in all_splits:
+            best_split = self.calculate_best_key(examples, splits)
+            if best_split[0] > max_split[0]:
+                max_split = best_split
+        new_node = DecisionNode(max_split[0], splits[max_split[0]], self.learn_tree(max_split[2]), self.learn_tree(max_split[1]), None)
+        return new_node
+
+    def get_splits(self, examples, keys, index, current):
+        splits = []
+        for example in examples:
+            new = current.copy()
+            new[keys[index]] = example[keys[index]]
+            if index == len(keys) - 1:
+                splits.append(new)
+            else:
+                new_splits = self.get_splits(examples, keys, index + 1, new)
+                splits = splits + new_splits
+        return splits
+
+    def calculate_best_key(self, examples, splits):
+        parent_entropy = self.calculate_entropy(examples, splits)
+        igs = []
+        for key in splits.keys():
+            child_ex1 = []
+            child_ex2 = []
+            probability = 0
+            for example in examples:
+                if example[key] >= splits[key]:
+                    probability += 1
+                    child_ex1.append(example)
+                else:
+                    child_ex2.append(example)
+            probability /= len(examples)
+            e1 = self.calculate_entropy(child_ex1, splits)
+            e2 = self.calculate_entropy(child_ex2, splits)
+            ig = parent_entropy - ((probability * e1) + ((1 - probability) * e2))
+            igs.append((ig, key))
+        max_ig = igs[0]
+        for ig in igs:
+            if ig[0] > max_ig[0]:
+                max_ig = ig
+        return (max_ig[1], e1, e2)
+
+    def calculate_entropy(self, examples, splits):
+        probabilities = {}
+        for key in examples[0].keys():
+            probability = 0
+            for example in examples:
+                if example[key] >= splits[key]:
+                    probability += 1
+            probability /= len(examples)
+            probabilities[key] = probability
+        entropy = 0
+        for probability in probabilities:
+            entropy += math.log2(probability) * probability
+        return entropy
+
     def classify(self, example):
         """Perform inference on a single example.
 
