@@ -141,13 +141,17 @@ class DecisionTree:
         """ 
         # call recursively by simply passing the two partitions into learn_tree as examples
         # splits are based on >=
-        all_splits = self.get_splits(examples, examples[0].keys(), 0, {})
+        examples_copy = examples.copy()
+        for example in examples_copy:
+            example.pop('town', None)
+            example.pop('2020_label')
+        all_splits = self.get_splits(examples_copy, examples_copy[0].keys(), 0, {})
         max_split = (0, None, None)
         for splits in all_splits:
-            best_split = self.calculate_best_key(examples, splits)
+            best_split = self.calculate_best_key(examples_copy, splits)
             if best_split[0] > max_split[0]:
                 max_split = best_split
-        new_node = DecisionNode(max_split[0], splits[max_split[0]], self.learn_tree(max_split[2]), self.learn_tree(max_split[1]), None)
+        new_node = DecisionNode(max_split[0], splits[max_split[0]], self.learn_tree(max_split[2]), self.learn_tree(max_split[1]), self.learn_tree(max_split[3]))
         return new_node
 
     def get_splits(self, examples, keys, index, current):
@@ -168,23 +172,31 @@ class DecisionTree:
         for key in splits.keys():
             child_ex1 = []
             child_ex2 = []
-            probability = 0
+            child_ex3 = []
+            p1 = 0
+            p2 = 0
+            p3 = 0
             for example in examples:
                 if example[key] >= splits[key]:
                     probability += 1
                     child_ex1.append(example)
-                else:
+                elif example[key] < splits[key]:
                     child_ex2.append(example)
-            probability /= len(examples)
+                else:
+                    child_ex3.append(example)
+            p1 /= len(examples)
+            p2 /= len(examples)
+            p3 /= len(examples)
             e1 = self.calculate_entropy(child_ex1, splits)
             e2 = self.calculate_entropy(child_ex2, splits)
-            ig = parent_entropy - ((probability * e1) + ((1 - probability) * e2))
+            e3 = self.calculate_entropy(child_ex3, splits)
+            ig = parent_entropy - ((p1 * e1) + (p2 * e2) + (p3 * e3))
             igs.append((ig, key))
         max_ig = igs[0]
         for ig in igs:
             if ig[0] > max_ig[0]:
                 max_ig = ig
-        return (max_ig[1], e1, e2)
+        return (max_ig[1], e1, e2, e3)
 
     def calculate_entropy(self, examples, splits):
         probabilities = {}
