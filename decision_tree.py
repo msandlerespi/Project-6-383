@@ -147,26 +147,19 @@ class DecisionTree:
         # call recursively by simply passing the two partitions into learn_tree as examples
         # splits are based on >=
         
-        
-
-        # if(len(max_split[1]) > self.min_leaf_count and len(max_split[2]) > self.min_leaf_count and len(max_split[3]) > self.min_leaf_count):
-        #     new_node = DecisionNode(max_split[0], splits[max_split[0]], self.learn_tree_helper(max_split[2], splits), self.learn_tree_helper(max_split[1], splits), self.learn_tree_helper(max_split[3], splits))
-        #     return new_node
-        # else:
-        #     pred_class = (0, 0)
-        #     for key in examples_copy.keys():
-        #         count = 0
-        #         for example in examples_copy:
-        #             if example[key] >= splits[key]:
-        #                 count += 1
-        #         if count > pred_class[0]:
-        #             pred_class = (count, key)
-        #     return LeafNode(pred_class[1], pred_class[0], len(examples_copy))
-
-    def learn_tree_helper(self, examples, splits):
-        print("learning tree")
-        max_split = self.calculate_best_key(examples, splits)
-        new_node = DecisionNode(max_split[0], splits[max_split[0]], self.learn_tree_helper(max_split[2], splits), self.learn_tree_helper(max_split[1], splits), self.learn_tree_helper(max_split[3], splits))
+        split = self.calculate_best_key(examples)
+        if(len(split[1]) > self.min_leaf_count and len(split[2]) > self.min_leaf_count and len(split[3]) > self.min_leaf_count):
+            new_node = DecisionNode(split[0], self.splits[split[0]], self.learn_tree(split[2]), self.learn_tree(split[1]), self.learn_tree(split[3]))
+        else:
+            pred_class = (0, 0)
+            for key in self.splits.keys():
+                count = 0
+                for example in examples:
+                    if example[key] >= self.splits[key]:
+                        count += 1
+                if count > pred_class[0]:
+                    pred_class = (count, key)
+            new_node = LeafNode(pred_class[1], pred_class[0], len(examples))
         return new_node
 
     def calculate_best_key(self, examples):
@@ -196,12 +189,12 @@ class DecisionTree:
             e2 = self.calculate_entropy(child_ex2)
             e3 = self.calculate_entropy(child_ex3)
             ig = parent_entropy - ((p1 * e1) + (p2 * e2) + (p3 * e3))
-            igs.append((ig, key))
+            igs.append((ig, key, e1, e2, e3))
         max_ig = igs[0]
         for ig in igs:
             if ig[0] > max_ig[0]:
                 max_ig = ig
-        return (max_ig[1], e1, e2, e3)
+        return (max_ig[1], max_ig[2], max_ig[3], max_ig[4])
 
     def attribute_entropy(self, examples, attribute, splits):
         max_split = (0, 0)
