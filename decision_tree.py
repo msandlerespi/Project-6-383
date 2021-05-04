@@ -128,6 +128,7 @@ class DecisionTree:
 
         self.splits = self.make_splits(examples)
         self.set_optimal_splits(examples)
+        
 
         # build the tree!
         self.root = self.learn_tree(examples)  
@@ -148,14 +149,14 @@ class DecisionTree:
         # splits are based on >=
         
         split = self.calculate_best_key(examples)
-        if(len(split[1]) > self.min_leaf_count and len(split[2]) > self.min_leaf_count and len(split[3]) > self.min_leaf_count):
+        if(len(split[1]) > self.min_leaf_count and len(split[2]) > self.min_leaf_count):
             new_node = DecisionNode(split[0], self.splits[split[0]], self.learn_tree(split[2]), self.learn_tree(split[1]), self.learn_tree(split[3]))
         else:
             pred_class = (0, 0)
             for key in self.splits.keys():
                 count = 0
                 for example in examples:
-                    if example[key] >= self.splits[key]:
+                    if example[key] is not None and example[key] >= self.splits[key]:
                         count += 1
                 if count > pred_class[0]:
                     pred_class = (count, key)
@@ -189,7 +190,7 @@ class DecisionTree:
             e2 = self.calculate_entropy(child_ex2)
             e3 = self.calculate_entropy(child_ex3)
             ig = parent_entropy - ((p1 * e1) + (p2 * e2) + (p3 * e3))
-            igs.append((ig, key, e1, e2, e3))
+            igs.append((ig, key, child_ex1, child_ex2, child_ex3))
         max_ig = igs[0]
         for ig in igs:
             if ig[0] > max_ig[0]:
@@ -214,9 +215,13 @@ class DecisionTree:
 
     def set_optimal_splits(self, examples):
         for key in self.splits.keys():
-            self.splits[key] = self.attribute_entropy(examples, key, self.splits[key])
+            val = self.attribute_entropy(examples, key, self.splits[key])
+            print(val)
+            self.splits[key] = val
     
     def calculate_entropy(self, examples):
+        if len(examples) == 0:
+            return 0
         entropy = 0
         for key in self.splits.keys():
             p = 0
@@ -232,7 +237,7 @@ class DecisionTree:
         #splits = {key1: [ints], key2: [ints], ... }
         splits = {}
         for key in examples[0].keys():
-            if key == 'town' or '2020_label':
+            if key == 'town' or key == '2020_label':
                 continue
             values = []
             max_val = None
@@ -248,7 +253,9 @@ class DecisionTree:
                     min_val = example[key]
                 elif example[key] > max_val:
                     max_val = example[key]
-            values = random.sample(range(min_val, max_val), 10)
+            values = []
+            for i in range(10):
+                values.append((i * (max_val - min_val) / 10) + min_val)
             splits[key] = values
         return splits
 
