@@ -146,39 +146,22 @@ class DecisionTree:
         """ 
         # call recursively by simply passing the two partitions into learn_tree as examples
         # splits are based on >=
-        examples_copy = examples.copy()
-        for example in examples_copy:
-            example.pop('town', None)
-            example.pop('2020_label')
-        # all_splits = self.get_splits(examples_copy, list(examples_copy[0].keys()), 0, {})
-        all_splits = [1]
-        splits = {}
-        for key in examples_copy[0].keys():
-            splits[key] = 0
-            for example in examples_copy:
-                if example[key] != None:
-                    splits[key] += example[key]
-            splits[key] /= len(examples_copy)
-        max_split = (0, None, None)
-        splits = all_splits[0]
-        for split in all_splits:
-            best_split = self.calculate_best_key(examples_copy, splits)
-            if best_split[0] > max_split[0]:
-                max_split = best_split
-                splits = split
-        if(len(max_split[1]) > self.min_leaf_count and len(max_split[2]) > self.min_leaf_count and len(max_split[3]) > self.min_leaf_count):
-            new_node = DecisionNode(max_split[0], splits[max_split[0]], self.learn_tree_helper(max_split[2], splits), self.learn_tree_helper(max_split[1], splits), self.learn_tree_helper(max_split[3], splits))
-            return new_node
-        else:
-            pred_class = (0, 0)
-            for key in examples_copy.keys():
-                count = 0
-                for example in examples_copy:
-                    if example[key] >= splits[key]:
-                        count += 1
-                if count > pred_class[0]:
-                    pred_class = (count, key)
-            return LeafNode(pred_class[1], pred_class[0], len(examples_copy))
+        
+        
+
+        # if(len(max_split[1]) > self.min_leaf_count and len(max_split[2]) > self.min_leaf_count and len(max_split[3]) > self.min_leaf_count):
+        #     new_node = DecisionNode(max_split[0], splits[max_split[0]], self.learn_tree_helper(max_split[2], splits), self.learn_tree_helper(max_split[1], splits), self.learn_tree_helper(max_split[3], splits))
+        #     return new_node
+        # else:
+        #     pred_class = (0, 0)
+        #     for key in examples_copy.keys():
+        #         count = 0
+        #         for example in examples_copy:
+        #             if example[key] >= splits[key]:
+        #                 count += 1
+        #         if count > pred_class[0]:
+        #             pred_class = (count, key)
+        #     return LeafNode(pred_class[1], pred_class[0], len(examples_copy))
 
     def learn_tree_helper(self, examples, splits):
         print("learning tree")
@@ -186,26 +169,10 @@ class DecisionTree:
         new_node = DecisionNode(max_split[0], splits[max_split[0]], self.learn_tree_helper(max_split[2], splits), self.learn_tree_helper(max_split[1], splits), self.learn_tree_helper(max_split[3], splits))
         return new_node
 
-    def get_splits(self, examples, keys, index, current):
-        splits = []
-        count = 0
-        for example in examples:
-            print("\\ building splits /" if count % 2 == 0 else "/ building splits \\")
-            if count % 35 == 0:
-                new = current.copy()
-                new[keys[index]] = example[keys[index]]
-                if index == len(keys) - 1:
-                    splits.append(new)
-                else:
-                    new_splits = self.get_splits(examples, keys, index + 1, new)
-                    splits = splits + new_splits
-            count += 1
-        return splits
-
-    def calculate_best_key(self, examples, splits):
-        parent_entropy = self.calculate_entropy(examples, splits)
+    def calculate_best_key(self, examples):
+        parent_entropy = self.calculate_entropy(examples)
         igs = []
-        for key in splits.keys():
+        for key in self.splits.keys():
             child_ex1 = []
             child_ex2 = []
             child_ex3 = []
@@ -216,7 +183,7 @@ class DecisionTree:
                 if example[key] == None:
                     child_ex3.append(example)
                     p3 += 1
-                elif example[key] >= splits[key]:
+                elif example[key] >= self.splits[key]:
                     p1 += 1
                     child_ex1.append(example)
                 else:
@@ -225,9 +192,9 @@ class DecisionTree:
             p1 /= len(examples)
             p2 /= len(examples)
             p3 /= len(examples)
-            e1 = self.calculate_entropy(child_ex1, splits)
-            e2 = self.calculate_entropy(child_ex2, splits)
-            e3 = self.calculate_entropy(child_ex3, splits)
+            e1 = self.calculate_entropy(child_ex1)
+            e2 = self.calculate_entropy(child_ex2)
+            e3 = self.calculate_entropy(child_ex3)
             ig = parent_entropy - ((p1 * e1) + (p2 * e2) + (p3 * e3))
             igs.append((ig, key))
         max_ig = igs[0]
@@ -256,19 +223,16 @@ class DecisionTree:
         for key in self.splits.keys():
             self.splits[key] = self.attribute_entropy(examples, key, self.splits[key])
     
-    def calculate_entropy(self, examples, splits):
-        probabilities = []
-        for key in examples[0].keys():
-            probability = 0
-            for example in examples:
-                if example[key] != None and example[key] >= splits[key]:
-                    probability += 1
-            probability /= len(examples)
-            probabilities.append(probability)
+    def calculate_entropy(self, examples):
         entropy = 0
-        for p in probabilities:
+        for key in self.splits.keys():
+            p = 0
+            for example in examples:
+                if example[key] != None and example[key] >= self.splits[key]:
+                    p += 1
+            p /= len(examples)
             if p != 0:
-                entropy += math.log2(p) * (p * -1)
+                entropy += math.log2(p) * (p * -1)    
         return entropy
     
     def make_splits(self, examples):
