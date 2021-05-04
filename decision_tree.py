@@ -127,6 +127,7 @@ class DecisionTree:
         self.min_leaf_count = min_leaf_count
 
         self.splits = self.make_splits(examples)
+        self.set_optimal_splits(examples)
 
         # build the tree!
         self.root = self.learn_tree(examples)  
@@ -235,6 +236,26 @@ class DecisionTree:
                 max_ig = ig
         return (max_ig[1], e1, e2, e3)
 
+    def attribute_entropy(self, examples, attribute, splits):
+        max_split = (0, 0)
+        for split in splits:
+            p = 0
+            for example in examples:
+                if example[attribute] and example[attribute] >= split:
+                    p += 1
+            p /= len(examples)
+            if p == 0:
+                entropy = 0
+            else:
+                entropy = (p * -1) * math.log2(p)
+            if entropy > max_split[1]:
+                max_split = (split, entropy)
+        return max_split[0]
+
+    def set_optimal_splits(self, examples):
+        for key in self.splits.keys():
+            self.splits[key] = self.attribute_entropy(examples, key, self.splits[key])
+    
     def calculate_entropy(self, examples, splits):
         probabilities = []
         for key in examples[0].keys():
