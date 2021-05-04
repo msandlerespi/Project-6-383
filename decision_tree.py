@@ -1,6 +1,7 @@
 import csv
 import random
 import math
+import operator
 
 def read_data(csv_path):
     """Read in the training data from a csv file.
@@ -152,15 +153,11 @@ class DecisionTree:
         if(len(split[1]) > self.min_leaf_count and len(split[2]) > self.min_leaf_count):
             new_node = DecisionNode(split[0], self.splits[split[0]], self.learn_tree(split[2]), self.learn_tree(split[1]), self.learn_tree(split[3]))
         else:
-            pred_class = (0, 0)
-            for key in self.splits.keys():
-                count = 0
-                for example in examples:
-                    if example[key] is not None and example[key] >= self.splits[key]:
-                        count += 1
-                if count > pred_class[0]:
-                    pred_class = (count, key)
-            new_node = LeafNode(pred_class[1], pred_class[0], len(examples))
+            pred_class = { 'red': 0, 'light blue': 0, 'medium blue': 0, 'wicked blue': 0 }
+            for example in examples:
+                pred_class[example['2020_label']] += 1
+            key = max(pred_class.items(), key=operator.itemgetter(1))[0]
+            new_node = LeafNode(key, pred_class[key], len(examples))
         return new_node
 
     def calculate_best_key(self, examples):
