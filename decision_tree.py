@@ -151,7 +151,7 @@ class DecisionTree:
         
         split = self.calculate_best_key(examples)
         if(len(split[1]) > self.min_leaf_count and len(split[2]) > self.min_leaf_count):
-            new_node = DecisionNode(split[0], self.splits[split[0]], self.learn_tree(split[2]), self.learn_tree(split[1]), self.learn_tree(split[3]))
+            new_node = DecisionNode(split[0], self.splits[split[0]], self.learn_tree(split[2]), self.learn_tree(split[1]), self.learn_tree(split[3]) if len(split[3]) > 0 else None)
         else:
             pred_class = { 'red': 0, 'light blue': 0, 'medium blue': 0, 'wicked blue': 0 }
             for example in examples:
