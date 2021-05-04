@@ -126,8 +126,12 @@ class DecisionTree:
         self.class_name = class_name
         self.min_leaf_count = min_leaf_count
 
+        self.splits = self.make_splits(examples)
+
         # build the tree!
         self.root = self.learn_tree(examples)  
+
+
 
     def learn_tree(self, examples):
         """Build the decision tree based on entropy and information gain.
@@ -245,6 +249,22 @@ class DecisionTree:
             if p != 0:
                 entropy += math.log2(p) * (p * -1)
         return entropy
+    
+    def make_splits(self, examples):
+        #splits = {key1: [ints], key2: [ints], ... }
+        splits = {}
+        for key in examples[0].keys():
+            values = []
+            max_val = examples[1][key]
+            min_val = examples[1][key]
+            for example in examples:
+                if example[key] < min_val:
+                    min_val = example[key]
+                elif example[key] > max_val:
+                    max_val = example[key]
+            values = random.sample(range(min_val, max_val), 10)
+            splits[key] = values
+        return splits
 
     def classify(self, example):
         """Perform inference on a single example.
