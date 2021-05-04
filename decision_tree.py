@@ -145,7 +145,15 @@ class DecisionTree:
         for example in examples_copy:
             example.pop('town', None)
             example.pop('2020_label')
-        all_splits = self.get_splits(examples_copy, examples_copy[0].keys(), 0, {})
+        # all_splits = self.get_splits(examples_copy, list(examples_copy[0].keys()), 0, {})
+        all_splits = [1]
+        splits = {}
+        for key in examples_copy[0].keys():
+            splits[key] = 0
+            for example in examples_copy:
+                if example[key] != None:
+                    splits[key] += example[key]
+            splits[key] /= len(examples_copy)
         max_split = (0, None, None)
         splits = all_splits[0]
         for split in all_splits:
@@ -168,20 +176,25 @@ class DecisionTree:
             return LeafNode(pred_class[1], pred_class[0], len(examples_copy))
 
     def learn_tree_helper(self, examples, splits):
+        print("learning tree")
         max_split = self.calculate_best_key(examples, splits)
         new_node = DecisionNode(max_split[0], splits[max_split[0]], self.learn_tree_helper(max_split[2], splits), self.learn_tree_helper(max_split[1], splits), self.learn_tree_helper(max_split[3], splits))
         return new_node
 
     def get_splits(self, examples, keys, index, current):
         splits = []
+        count = 0
         for example in examples:
-            new = current.copy()
-            new[keys[index]] = example[keys[index]]
-            if index == len(keys) - 1:
-                splits.append(new)
-            else:
-                new_splits = self.get_splits(examples, keys, index + 1, new)
-                splits = splits + new_splits
+            print("\\ building splits /" if count % 2 == 0 else "/ building splits \\")
+            if count % 35 == 0:
+                new = current.copy()
+                new[keys[index]] = example[keys[index]]
+                if index == len(keys) - 1:
+                    splits.append(new)
+                else:
+                    new_splits = self.get_splits(examples, keys, index + 1, new)
+                    splits = splits + new_splits
+            count += 1
         return splits
 
     def calculate_best_key(self, examples, splits):
@@ -195,13 +208,15 @@ class DecisionTree:
             p2 = 0
             p3 = 0
             for example in examples:
-                if example[key] >= splits[key]:
-                    probability += 1
-                    child_ex1.append(example)
-                elif example[key] < splits[key]:
-                    child_ex2.append(example)
-                else:
+                if example[key] == None:
                     child_ex3.append(example)
+                    p3 += 1
+                elif example[key] >= splits[key]:
+                    p1 += 1
+                    child_ex1.append(example)
+                else:
+                    child_ex2.append(example)
+                    p2 += 1
             p1 /= len(examples)
             p2 /= len(examples)
             p3 /= len(examples)
@@ -217,17 +232,18 @@ class DecisionTree:
         return (max_ig[1], e1, e2, e3)
 
     def calculate_entropy(self, examples, splits):
-        probabilities = {}
+        probabilities = []
         for key in examples[0].keys():
             probability = 0
             for example in examples:
-                if example[key] >= splits[key]:
+                if example[key] != None and example[key] >= splits[key]:
                     probability += 1
             probability /= len(examples)
-            probabilities[key] = probability
+            probabilities.append(probability)
         entropy = 0
-        for probability in probabilities:
-            entropy += math.log2(probability) * probability
+        for p in probabilities:
+            if p != 0:
+                entropy += math.log2(p) * (p * -1)
         return entropy
 
     def classify(self, example):
