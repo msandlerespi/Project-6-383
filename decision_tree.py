@@ -254,10 +254,7 @@ class DecisionTree:
 
         Returns: a tuple containing a class label and a probability
         """
-        #
-        # fill in the function body here!
-        #
-        return "hello", 0.42  # fix this line!
+        return self.root.classify(example)
 
     def __str__(self):
         """String representation of tree, calls _ascii_tree()."""
