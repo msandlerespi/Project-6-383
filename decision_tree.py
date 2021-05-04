@@ -254,10 +254,18 @@ class DecisionTree:
         #splits = {key1: [ints], key2: [ints], ... }
         splits = {}
         for key in examples[0].keys():
+            if key == 'town' or '2020_label':
+                continue
             values = []
-            max_val = examples[1][key]
-            min_val = examples[1][key]
+            max_val = None
+            min_val = None
             for example in examples:
+                if example[key] is None:
+                    continue
+                if max_val is None:
+                    max_val = example[key]
+                    min_val = example[key]
+
                 if example[key] < min_val:
                     min_val = example[key]
                 elif example[key] > max_val:
